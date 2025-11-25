@@ -10,12 +10,13 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
-public class ProducerKafkaTemplate {
+public class ProducerService {
 
     @Autowired
-    private KafkaTemplate<Integer, Product> kafkaTemplate;
+    private KafkaTemplate<String, Product> kafkaTemplate;
 
-    public Integer sendKafkaTemplate(Product product) throws ExecutionException, InterruptedException {
+    public String sendKafkaTemplate(Product product) throws ExecutionException,
+            InterruptedException {
 
         var result = kafkaTemplate.send("product-created-topic", product.getId(), product);
         result.whenComplete( (res, exception) -> {
