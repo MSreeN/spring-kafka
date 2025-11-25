@@ -18,9 +18,15 @@ public class WebController {
     @Autowired
     private ProducerService producerService;
 
-    @PostMapping("/create")
-    public ResponseEntity<String> createProduct(@RequestBody Product product) throws ExecutionException, InterruptedException {
-        producerService.sendKafkaTemplate(product);
+    @PostMapping("/create/async")
+    public ResponseEntity<String> createProductAsync(@RequestBody Product product) throws ExecutionException, InterruptedException {
+        producerService.sendAsync(product);
         return new ResponseEntity<>(product.getId(), HttpStatus.OK);
+    }
+
+    @PostMapping("/create/sync")
+    public ResponseEntity<Product> createProductSync(@RequestBody Product product) throws ExecutionException, InterruptedException {
+        producerService.sendSync(product);
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 }

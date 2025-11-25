@@ -4,6 +4,7 @@ import com.learn.kafka_producer.model.Product;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutionException;
@@ -15,9 +16,8 @@ public class ProducerService {
     @Autowired
     private KafkaTemplate<String, Product> kafkaTemplate;
 
-    public String sendKafkaTemplate(Product product) throws ExecutionException,
+    public String sendAsync(Product product) throws ExecutionException,
             InterruptedException {
-
         var result = kafkaTemplate.send("product-created-topic", product.getId(), product);
         result.whenComplete( (res, exception) -> {
            if(exception != null){
@@ -26,5 +26,14 @@ public class ProducerService {
            else log.info("Successfully sent event");
         });
         return product.getId();
+    }
+
+    public Product sendSync(Product product) throws ExecutionException, InterruptedException {
+        SendResult<String, Product> res =
+                kafkaTemplate.send("product-created-topic", product.getId(), product).get();
+        Product prod = res.getProducerRecord().value();
+        log.info("{} message successfully sent to {}", prod.getName(), res.getRecordMetadata().topic());
+        return prod;
+
     }
 }
