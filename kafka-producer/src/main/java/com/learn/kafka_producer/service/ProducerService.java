@@ -33,13 +33,25 @@ public class ProducerService {
     //sending message synchronously using producerRecord
     public Product sendSync(Product product) throws ExecutionException, InterruptedException {
         SendResult<String, Product> res =
-                kafkaTemplate.send(createProducerRecord(product)).get();
+                kafkaTemplate.send(createProducerRecord(product, null)).get();
         Product prod = res.getProducerRecord().value();
         log.info("{} message successfully sent to {}", prod.getName(), res.getRecordMetadata().topic());
         return prod;
     }
 
-    public ProducerRecord<String, Product> createProducerRecord(Product product){
-        return new ProducerRecord<>("product-created-topic", product.getId(), product);
+    public ProducerRecord<String, Product> createProducerRecord(Product product, String partition){
+        return new ProducerRecord<>("product-created-topic", partition!=null? Integer.valueOf(partition):
+                null ,
+                product.getId(),
+                product);
+    }
+
+    public Product sendToPartition(Product product, String partition) throws ExecutionException, InterruptedException {
+        createProducerRecord(product, partition);
+        SendResult<String, Product> res =
+                kafkaTemplate.send(createProducerRecord(product, partition)).get();
+        Product prod = res.getProducerRecord().value();
+        log.info("{} message successfully sent to {}", prod.getName(), res.getRecordMetadata().topic());
+        return prod;
     }
 }
