@@ -1,8 +1,8 @@
 package com.learn.kafka_producer.service;
 
-import com.learn.kafka_producer.model.Product;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.example.model.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;

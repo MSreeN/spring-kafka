@@ -1,7 +1,7 @@
 package com.learn.kafka_producer.controller;
 
-import com.learn.kafka_producer.model.Product;
 import com.learn.kafka_producer.service.ProducerService;
+import org.example.model.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
