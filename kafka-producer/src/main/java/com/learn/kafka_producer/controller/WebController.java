@@ -33,4 +33,12 @@ public class WebController {
         producerService.sendToPartition(product, partition);
         return new ResponseEntity<>(product, HttpStatus.OK);
     }
+
+    @PostMapping("/create/{topic}/{partition}")
+    public ResponseEntity<Product> testTopic(@PathVariable(name="topic") String topicName,
+                                             @PathVariable(name = "partition") String partition,
+                                             @RequestBody Product product) throws ExecutionException, InterruptedException {
+        return new ResponseEntity<>(producerService.sendToTestTopic(topicName, partition,
+                product), HttpStatus.OK);
+    }
 }

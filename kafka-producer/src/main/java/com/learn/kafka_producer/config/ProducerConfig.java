@@ -31,4 +31,9 @@ public class ProducerConfig {
         return new NewTopic("product-created-topic", 3, (short)1)
                 .configs(Map.of(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "3"));
     }
+
+    @Bean
+    public NewTopic testTopic(){
+        return new NewTopic("test-topic", 2, (short)1);
+    }
 }

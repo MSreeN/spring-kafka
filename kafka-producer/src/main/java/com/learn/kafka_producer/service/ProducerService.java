@@ -54,4 +54,10 @@ public class ProducerService {
         log.info("{} message successfully sent to {}", prod.getName(), res.getRecordMetadata().topic());
         return prod;
     }
+
+    public Product sendToTestTopic(String topic, String partition, Product product) throws ExecutionException, InterruptedException {
+        ProducerRecord<String, Product> record = new ProducerRecord<>(topic,
+                partition, product);
+        return kafkaTemplate.send(record).get().getProducerRecord().value();
+    }
 }
