@@ -1,5 +1,6 @@
 package com.learn.EmailNotificationService.service;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.example.model.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,5 +17,10 @@ public class EmailListener {
     @KafkaHandler
     public void consumerMail(Product product){
         log.info(product.toString());
+    }
+
+    @KafkaListener(topics = "test-topic", containerFactory = "testCustomFactory")
+    public void consumerTest(ConsumerRecord<String, Product> record){
+        log.info("Consumed {} event from {} topic", record.value().getName(), record.topic());
     }
 }
