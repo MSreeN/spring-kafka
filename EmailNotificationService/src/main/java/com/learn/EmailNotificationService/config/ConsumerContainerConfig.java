@@ -1,12 +1,15 @@
 package com.learn.EmailNotificationService.config;
 
+import com.learn.EmailNotificationService.exception.RetryableException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.example.model.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
@@ -37,9 +40,18 @@ public class ConsumerContainerConfig {
     }
 
     DefaultErrorHandler errorHandler(KafkaTemplate<String, Product> kafkaTemplate){
-        DeadLetterPublishingRecoverer deadLetterPublishingRecoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+        DeadLetterPublishingRecoverer deadLetterPublishingRecoverer =
+                new DeadLetterPublishingRecoverer(kafkaTemplate,
+                        (record, ex) ->{
+                            if(ex instanceof RecoverableDataAccessException){
+                                return new TopicPartition("test-topic-retry",record.partition());
+                            }
+                            else{
+                                return new TopicPartition("test-topic-dlt", record.partition());
+                            }
+                        });
         FixedBackOff backOff = new FixedBackOff(3000, 3);
-        var errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer, backOff);
+        var errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer);
         errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
             log.info("{} message failed to consume on {} attempt - {}", record.value(),
                     deliveryAttempt, ex.getMessage());

@@ -1,5 +1,6 @@
 package com.learn.EmailNotificationService.service;
 
+import com.learn.EmailNotificationService.exception.RetryableException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.example.model.Product;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class EmailListener {
     @KafkaListener(topics = "test-topic", containerFactory = "testCustomFactory")
     public void consumerTest(ConsumerRecord<String, Product> record){
         log.info("trying to consume {} event", record.value().getName());
-        throw new RuntimeException("Exception occurred");
+        throw new RetryableException("Exception occurred");
 //        log.info("Consumed {} event from {} topic", record.value().getName(), record.topic());
     }
 }
