@@ -5,7 +5,6 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.example.model.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -15,6 +14,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +32,20 @@ public class ConsumerContainerConfig {
                 ErrorHandlingDeserializer.class);
         configs.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JacksonJsonDeserializer.class);
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "email-group");
-//        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "org.example.model");
+        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "org.example.model");
         return new DefaultKafkaConsumerFactory(configs);
+    }
+
+    DefaultErrorHandler errorHandler(KafkaTemplate<String, Product> kafkaTemplate){
+        DeadLetterPublishingRecoverer deadLetterPublishingRecoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+        FixedBackOff backOff = new FixedBackOff(3000, 3);
+        var errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer, backOff);
+        errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
+            log.info("{} message failed to consume on {} attempt - {}", record.value(),
+                    deliveryAttempt, ex.getMessage());
+        });
+        errorHandler.addRetryableExceptions(RuntimeException.class);
+        return errorHandler;
     }
 
     @Bean
@@ -41,10 +53,7 @@ public class ConsumerContainerConfig {
         ConcurrentKafkaListenerContainerFactory<String, Product> container =
                 new ConcurrentKafkaListenerContainerFactory<>();
         container.setConsumerFactory(consumerFactory());
-        DeadLetterPublishingRecoverer deadLetterPublishingRecoverer =
-                new DeadLetterPublishingRecoverer(kafkaTemplate);
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer);
-        container.setCommonErrorHandler(errorHandler);
+        container.setCommonErrorHandler(errorHandler(kafkaTemplate));
         return container;
     }
 

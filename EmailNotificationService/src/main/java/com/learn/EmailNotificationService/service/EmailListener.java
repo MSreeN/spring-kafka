@@ -21,6 +21,8 @@ public class EmailListener {
 
     @KafkaListener(topics = "test-topic", containerFactory = "testCustomFactory")
     public void consumerTest(ConsumerRecord<String, Product> record){
-        log.info("Consumed {} event from {} topic", record.value().getName(), record.topic());
+        log.info("trying to consume {} event", record.value().getName());
+        throw new RuntimeException("Exception occurred");
+//        log.info("Consumed {} event from {} topic", record.value().getName(), record.topic());
     }
 }
