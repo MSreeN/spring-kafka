@@ -14,6 +14,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
@@ -35,7 +36,7 @@ public class ConsumerContainerConfig {
                 ErrorHandlingDeserializer.class);
         configs.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JacksonJsonDeserializer.class);
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "email-group");
-        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "org.example.model");
+//        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "org.example.model");
         return new DefaultKafkaConsumerFactory(configs);
     }
 
@@ -51,12 +52,12 @@ public class ConsumerContainerConfig {
                             }
                         });
         FixedBackOff backOff = new FixedBackOff(3000, 3);
-        var errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer);
+        var errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer, backOff);
         errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
             log.info("{} message failed to consume on {} attempt - {}", record.value(),
                     deliveryAttempt, ex.getMessage());
         });
-        errorHandler.addRetryableExceptions(RuntimeException.class);
+        errorHandler.addRetryableExceptions(RuntimeException.class, DeserializationException.class);
         return errorHandler;
     }
 
